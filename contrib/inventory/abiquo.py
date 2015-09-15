@@ -45,7 +45,6 @@ import os
 import sys
 import time
 import ConfigParser
-import urllib2
 import base64
 
 try:
@@ -53,18 +52,20 @@ try:
 except ImportError:
     import simplejson as json
 
+from ansible.module_utils.urls import open_url
+
 def api_get(link, config):
     try:
         if link == None:
-            request = urllib2.Request(config.get('api','uri')+config.get('api','login_path'))
-            request.add_header("Accept",config.get('api','login_type'))
+            url = config.get('api','uri') + config.get('api','login_path')
+            headers = {"Accept": config.get('api','login_type')}
         else:
-            request = urllib2.Request(link['href']+'?limit=0')
-            request.add_header("Accept",link['type'])
+            url = link['href'] + '?limit=0'
+            headers = {"Accept": link['type']}
         # Auth
-        base64string = base64.encodestring('%s:%s' % (config.get('auth','apiuser'),config.get('auth','apipass'))).replace('\n', '')
         request.add_header("Authorization", "Basic %s" % base64string)
-        result = urllib2.urlopen(request)
+        result = open_url(url, headers=headers, url_username=config.get('auth','apiuser').replace('\n', ''),
+                url_password=config.get('auth','apipass').replace('\n', ''))
         return json.loads(result.read())
     except:
         return None

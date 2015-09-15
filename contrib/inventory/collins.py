@@ -76,7 +76,6 @@ import sys
 from time import time
 import traceback
 import urllib
-import urllib2
 
 try:
     import json
@@ -85,6 +84,7 @@ except ImportError:
 
 from six import iteritems
 
+from ansible.module_utils.urls import open_url
 
 class CollinsDefaults(object):
     ASSETS_API_ENDPOINT = '%s/api/assets'
@@ -198,10 +198,9 @@ class CollinsInventory(object):
                 (CollinsDefaults.ASSETS_API_ENDPOINT % self.collins_host),
                 urllib.urlencode(query_parameters, doseq=True)
             )
-            request = urllib2.Request(query_url)
-            request.add_header('Authorization', self.basic_auth_header)
+            headers = {'Authorization': self.basic_auth_header}
             try:
-                response = urllib2.urlopen(request, timeout=self.collins_timeout_secs)
+                response = open_url(query_url, headers=headers, timeout=self.collins_timeout_secs)
                 json_response = json.loads(response.read())
                 # Adds any assets found to the array of assets.
                 assets += json_response['data']['Data']
